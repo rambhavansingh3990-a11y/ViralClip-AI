@@ -64,3 +64,8 @@ Render free-service instances may sleep while idle, and their local filesystem i
 ## Responsible use
 
 Only process content you own or have permission to use. Do not bypass DRM, authentication, paywalls, or platform restrictions.
+
+
+## Android APK release
+
+The Android app is built with Capacitor and uses the hosted API at `https://viralclip-ai-mvse.onrender.com` for video processing. A GitHub Actions workflow builds an installable debug APK and publishes it as a prerelease asset named `ViralClip-AI.apk` when code is pushed to `main` or the workflow is manually run. The APK is not a Play Store-signed production build. To install it, download the APK from the GitHub Releases page and allow your Android browser/file manager to install apps from that source. The first request may take time while the hosted server wakes up.

@@ -21,26 +21,33 @@ export default function App() {
       setStatus("Live-stream clipping is not available yet. Switch to Video mode and upload a recording.");
       return;
     }
-    if (!file) {
-      setStatus("Please choose a video file to continue. URL processing is coming soon.");
+    if (mode === "url" && !url.trim()) {
+      setStatus("Paste a direct MP4, MOV, or WEBM file URL.");
       return;
     }
-    if (file.size > 500 * 1024 * 1024) {
+    if (mode === "file" && !file) {
+      setStatus("Choose a video file or switch to URL mode.");
+      return;
+    }
+    if (mode === "file" && file.size > 500 * 1024 * 1024) {
       setStatus("This file is larger than the current 500 MB upload limit.");
       return;
     }
 
     setBusy(true);
-    setStatus("Uploading video…");
+    setStatus(mode === "url" ? "Fetching source video from URL…" : "Uploading video…");
     try {
-      const body = new FormData();
-      body.append("mode", "video");
-      body.append("sourceUrl", url);
-      body.append("language", language);
-      body.append("clipDuration", duration);
-      body.append("video", file);
-
-      const response = await fetch(API + "/api/jobs", { method: "POST", body });
+      let response;
+      if (mode === "url") {
+        response = await fetch(API + "/api/jobs/from-url", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ sourceUrl: url.trim(), language, clipDuration: duration }) });
+      } else {
+        const body = new FormData();
+        body.append("mode", "video");
+        body.append("language", language);
+        body.append("clipDuration", duration);
+        body.append("video", file);
+        response = await fetch(API + "/api/jobs", { method: "POST", body });
+      }
       const job = await response.json();
       if (!response.ok) throw Error(job.error || "Could not create job.");
 

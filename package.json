@@ -8,9 +8,12 @@
     "build": "vite build",
     "preview": "vite preview --host 0.0.0.0",
     "server": "node server/index.js",
-    "check:tools": "ffmpeg -version && ffprobe -version"
+    "check:tools": "ffmpeg -version && ffprobe -version",
+    "android:sync": "cap sync android"
   },
   "dependencies": {
+    "@capacitor/android": "^7.4.3",
+    "@capacitor/core": "^7.4.3",
     "cors": "^2.8.5",
     "express": "^4.21.2",
     "lucide-react": "^0.468.0",
@@ -19,6 +22,7 @@
     "react-dom": "^18.3.1"
   },
   "devDependencies": {
+    "@capacitor/cli": "^7.4.3",
     "@vitejs/plugin-react": "^4.3.4",
     "vite": "^6.0.5"
   }

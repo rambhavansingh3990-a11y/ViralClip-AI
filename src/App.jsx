@@ -119,6 +119,7 @@ export default function App() {
                 </select>
               </label>
             </div>
+            <p className="subtitleHint">Auto captions need an OPENAI_API_KEY set in Render Environment. Keep the key private.</p>
             <button className="submit" disabled={busy}>
               {busy ? <><LoaderCircle className="spin" /> Processing…</> : <><Sparkles /> Find highlight moments</>}
             </button>
@@ -131,7 +132,7 @@ export default function App() {
             <h3><Sparkles size={17} /> Generated clips</h3>
             {clips.map((clip, i) => (
               <a className="clip" key={clip.name} href={API + clip.url} target="_blank" rel="noreferrer">
-                <span><Video /> Clip {i + 1} · {clip.durationSeconds}s</span>
+                <span><Video /> Clip {i + 1} · {clip.durationSeconds}s {clip.subtitles ? "· Subtitles on" : "· No subtitles"}</span>
                 <small>Starts at {clip.startSeconds}s</small>
                 <b><Download size={16} /> Download MP4</b>
               </a>

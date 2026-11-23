@@ -18,6 +18,16 @@ export default function App() {
     e.preventDefault();
     setClips([]);
     if (mode === "url" && !url.trim()) return setStatus("Paste a direct public video-file URL.");
+    if (mode === "url") {
+      try {
+        const parsed = new URL(url.trim());
+        if (["youtube.com", "www.youtube.com", "youtu.be", "m.youtube.com"].includes(parsed.hostname.toLowerCase())) {
+          return setStatus("YouTube share links are not direct video files. Use a public direct MP4, MOV, or WEBM URL instead.");
+        }
+      } catch {
+        return setStatus("Enter a valid public video URL.");
+      }
+    }
     if (mode === "file" && !file) return setStatus("Choose a video file first.");
     if (mode === "file" && file.size > 500 * 1024 * 1024) return setStatus("This file is larger than the 500 MB upload limit.");
     setBusy(true);
@@ -33,13 +43,25 @@ export default function App() {
         body.append("video", file);
         response = await fetch(API + "/api/jobs", { method: "POST", body });
       }
-      const job = await response.json();
-      if (!response.ok) throw Error(job.error || "Could not create job.");
+      const readApiResponse = async (res, action) => {
+        const contentType = res.headers.get("content-type") || "";
+        const raw = await res.text();
+        if (!contentType.includes("application/json")) {
+          if (raw.trimStart().startsWith("<")) {
+            throw Error("The video API returned an HTML page instead of JSON. Render may still be running an older deployment. Open Render and redeploy the latest GitHub commit, then try again.");
+          }
+          throw Error("The video API returned an unexpected response. Please retry after the server is redeployed.");
+        }
+        let parsed;
+        try { parsed = JSON.parse(raw); } catch { throw Error("The video API returned invalid JSON. Please retry after the server is redeployed."); }
+        if (!res.ok) throw Error(parsed.error || action);
+        return parsed;
+      };
+      const job = await readApiResponse(response, "Could not create job.");
       for (let attempt = 0; attempt < 180; attempt++) {
         await wait(2000);
         const poll = await fetch(API + "/api/jobs/" + job.jobId);
-        const data = await poll.json();
-        if (!poll.ok) throw Error(data.error || "Could not check job status.");
+        const data = await readApiResponse(poll, "Could not check job status.");
         if (data.status === "completed") {
           setClips(data.clips || []);
           setStatus(data.subtitleStatus === "ready" ? "Done! Captions have been added." : data.subtitleStatus === "not_configured" ? "Clips ready. Add OPENAI_API_KEY in Render to enable captions." : "Clips are ready to download.");

@@ -27,7 +27,7 @@ app.post("/api/jobs",upload.single("video"),(req,res)=>{
   setImmediate(async()=>{
     job.status="processing";
     try{
-      const result=await processVideo({input:req.file.path,outputDir:path.join(outputDir,jobId),clipSeconds:job.clipDuration});
+      const result=await processVideo({input:req.file.path,outputDir:path.join(outputDir,jobId),clipSeconds:job.clipDuration,language:job.language});
       Object.assign(job,result,{status:"completed",completedAt:new Date().toISOString()});
     }catch(error){job.status="failed";job.error=error.message;}
     finally{try{await fs.promises.unlink(req.file.path);}catch{}}

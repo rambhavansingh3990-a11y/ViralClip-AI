@@ -14,7 +14,7 @@ app.use(express.static(path.resolve("dist")));
 const jobs=new Map();
 const upload=multer({dest:uploadDir,limits:{fileSize:Number(process.env.MAX_UPLOAD_MB||500)*1024*1024},fileFilter:(_r,f,cb)=>f.mimetype.startsWith("video/")?cb(null,true):cb(new Error("Upload a valid video file."))});
 
-app.get("/api/health",(_r,res)=>res.json({ok:true,service:"ViralClip AI API",ffmpegRequired:true}));
+app.get("/api/health",(_r,res)=>res.json({ok:true,service:"ViralClip AI API",ffmpegRequired:true,transcriptionConfigured:Boolean(process.env.OPENAI_API_KEY),features:{videoUpload:true,audioHighlightScan:true,verticalExport:true,burnedInSubtitles:Boolean(process.env.OPENAI_API_KEY),liveCapture:false,urlIngestion:false}}));
 app.post("/api/jobs",upload.single("video"),(req,res)=>{
   const {mode,sourceUrl,language,clipDuration}=req.body;
   if(!req.file){

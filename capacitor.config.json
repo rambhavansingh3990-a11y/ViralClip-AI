@@ -1,0 +1,6 @@
+{
+  "appId": "com.viralclip.ai",
+  "appName": "ViralClip AI",
+  "webDir": "dist",
+  "bundledWebRuntime": false
+}

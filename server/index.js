@@ -10,6 +10,7 @@ const app=express(),port=Number(process.env.PORT||8787);
 const uploadDir=path.resolve("uploads"),outputDir=path.resolve("outputs");
 fs.mkdirSync(uploadDir,{recursive:true});fs.mkdirSync(outputDir,{recursive:true});
 app.use(cors());app.use(express.json());app.use("/outputs",express.static(outputDir));
+app.use(express.static(path.resolve("dist")));
 const jobs=new Map();
 const upload=multer({dest:uploadDir,limits:{fileSize:Number(process.env.MAX_UPLOAD_MB||500)*1024*1024},fileFilter:(_r,f,cb)=>f.mimetype.startsWith("video/")?cb(null,true):cb(new Error("Upload a valid video file."))});
 
@@ -37,5 +38,6 @@ app.get("/api/jobs/:id",(req,res)=>{
   if(!job)return res.status(404).json({error:"Job not found. Jobs are stored in memory and reset when the server restarts."});
   res.json(job);
 });
+app.get("*",(req,res,next)=>{if(req.path.startsWith("/api/")||req.path.startsWith("/outputs/"))return next();res.sendFile(path.resolve("dist/index.html"));});
 app.use((err,_req,res,_next)=>res.status(400).json({error:err.message||"Request failed."}));
 app.listen(port,()=>console.log(`ViralClip AI API listening on ${port}`));

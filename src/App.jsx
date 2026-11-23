@@ -52,7 +52,7 @@ export default function App() {
         if (!poll.ok) throw Error(data.error || "Could not check job status.");
         if (data.status === "completed") {
           setClips(data.clips || []);
-          setStatus("Finished! Your vertical clips are ready.");
+          setStatus(data.subtitleStatus === "ready" ? "Finished! Hindi/English subtitles have been added to clips." : data.subtitleStatus === "not_configured" ? "Clips are ready. Add OPENAI_API_KEY in Render to enable automatic subtitles." : data.subtitleStatus === "audio_too_long" ? "Clips are ready, but the source audio is too long for one transcription request." : data.subtitleStatus === "failed" ? "Clips are ready, but transcription failed: " + (data.subtitleMessage || "check API key and try again.") : "Clips are ready. No speech was detected for subtitles.");
           return;
         }
         if (data.status === "failed") throw Error(data.error || "Clip processing failed.");
@@ -145,7 +145,7 @@ export default function App() {
         <div><Video /><b>Vertical 9:16</b><small>Blurred-fill framing</small></div>
         <div><Download /><b>MP4 export</b><small>Download your clips</small></div>
       </section>
-      <p className="note">This version uses audio-energy scoring, not semantic AI. Subtitles and live capture are not available yet. Only process content you own or are authorized to use.</p>
+      <p className="note">Highlight ranking currently uses audio energy, not semantic AI. Automatic subtitles require OPENAI_API_KEY in Render. Live capture is not available yet. Only process content you own or are authorized to use.</p>
     </main>
   );
 }

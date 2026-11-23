@@ -4,7 +4,7 @@ A web app for turning videos you own or are authorized to edit into vertical sho
 
 ## Current features
 
-- Upload video files up to 500 MB.
+- Upload video files up to 500 MB.\n- Import a public direct MP4, MOV, or WEBM file URL (up to 500 MB).\n- URL importer validates public hosts, rejects private-network targets, follows a limited number of redirects, and streams files to disk.
 - Analyze audio energy to find up to three candidate moments.
 - Render vertical 1080×1920 MP4 clips with blurred-fill framing.
 - Optional Whisper transcription with Hindi, English, Hinglish (Hindi transcription mode), or automatic language detection.
@@ -14,7 +14,7 @@ A web app for turning videos you own or are authorized to edit into vertical sho
 ## Not implemented yet
 
 - Live-stream capture.
-- Direct video URL ingestion.
+- YouTube watch/share URLs and authenticated/cloud-drive preview pages are not direct media URLs and are not imported. Provide a direct public video-file URL instead.
 - Semantic AI understanding of jokes, topics, emotion, or context.
 - Persistent job queue or permanent object storage.
 
@@ -32,7 +32,7 @@ Never put the API key in GitHub source code, the frontend, or a public chat. Tra
 ## API
 
 - `GET /api/health`: reports service status and which features are configured.
-- `POST /api/jobs`: multipart form upload with `video`, optional `clipDuration`, and `language`.
+- `POST /api/jobs`: multipart form upload with `video`, optional `clipDuration`, and `language`.\n- `POST /api/jobs/from-url`: JSON body `{ "sourceUrl": "https://host/video.mp4", "clipDuration": 30, "language": "Hindi" }` for public direct video-file URLs.
 - `GET /api/jobs/:id`: poll job status and retrieve clip URLs.
 - Generated files are served under `/outputs/`.
 

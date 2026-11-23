@@ -41,7 +41,7 @@ async function downloadDirectVideo(value,destination){
   }
   if(!response||!response.ok)throw Error("Could not fetch the video. Check that the direct file link is public and working.");
   const type=(response.headers.get("content-type")||"").split(";")[0].toLowerCase();
-  const ext=new URL(current).pathname.toLowerCase().match(/\\.(mp4|mov|webm)$/)?.[1];
+  const ext=new URL(current).pathname.toLowerCase().match(/\.(mp4|mov|webm)$/)?.[1];
   const allowed=type.startsWith("video/")||["application/octet-stream","binary/octet-stream"].includes(type);
   if(!allowed||(!ext&&!type.startsWith("video/")))throw Error("This is not a direct video file. Use a public MP4, MOV, or WEBM link; normal YouTube links are not supported.");
   const length=Number(response.headers.get("content-length")||0);if(length>MAX_SOURCE_BYTES)throw Error("The source video exceeds the configured 500 MB limit.");

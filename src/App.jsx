@@ -108,8 +108,8 @@ export default function App() {
               <input value={url} onChange={e => setUrl(e.target.value)} placeholder="Direct video URL processing is not enabled" disabled />
             </label>
             <div className="options">
-              <label><span><Languages /> Subtitle language</span>
-                <select value={language} onChange={e => setLanguage(e.target.value)}>
+              <label><span><Languages /> Subtitle language · Coming soon</span>
+                <select value={language} onChange={e => setLanguage(e.target.value)} disabled>
                   {["Hindi", "English", "Hinglish", "Auto detect"].map(x => <option key={x}>{x}</option>)}
                 </select>
               </label>

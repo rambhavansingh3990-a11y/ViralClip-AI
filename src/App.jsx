@@ -1,5 +1,5 @@
 import{useState}from"react";import{Sparkles,Upload,Link2,Scissors,Video,Radio,Download,Languages,Zap,LoaderCircle}from"lucide-react";
-const API=import.meta.env.VITE_API_URL||"http://localhost:8787";
+const API=import.meta.env.VITE_API_URL??"";
 const wait=ms=>new Promise(resolve=>setTimeout(resolve,ms));
 export default function App(){
  const[mode,setMode]=useState("video"),[url,setUrl]=useState(""),[file,setFile]=useState(null),[language,setLanguage]=useState("Hindi"),[duration,setDuration]=useState("30"),[status,setStatus]=useState(""),[busy,setBusy]=useState(false),[clips,setClips]=useState([]);

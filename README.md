@@ -36,3 +36,17 @@ This is a signal-based heuristic, not semantic AI: it does not yet understand sp
 - Generated files are served under `/outputs/`
 
 Current limitations: jobs are in-memory (restart clears status), outputs are local to the server, direct URL ingestion, live capture, transcription, subtitles, and semantic highlight ranking are not implemented yet.
+
+
+## Deploy as one web service
+
+A Dockerfile and Render Blueprint are included. The container installs FFmpeg, builds the Vite frontend, and serves the frontend and API from one Node service.
+
+1. Push this repository to GitHub (already done).
+2. In Render, create a new Blueprint and connect this repository.
+3. Review the `viralclip-ai` web service and deploy.
+4. Open the service URL and check `/api/health`.
+
+For local development, copy `.env.example` to `.env`, install FFmpeg locally, run `npm install`, then start the API with `npm run server` and the frontend with `npm run dev`.
+
+**Deployment caveats:** Render's free service may sleep when idle, and its local filesystem is ephemeral. Uploaded videos and generated clips may be lost after a restart/redeploy. Use persistent object storage and a durable job queue before relying on this for regular production use.

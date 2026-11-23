@@ -1,11 +1,11 @@
 import { useState } from "react";
-import { Sparkles, Upload, Link2, Scissors, Video, Radio, Download, Languages, Zap, LoaderCircle } from "lucide-react";
+import { Sparkles, Upload, Link2, Scissors, Video, Download, Languages, Zap, LoaderCircle } from "lucide-react";
 
 const API = import.meta.env.VITE_API_URL ?? "";
 const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
 
 export default function App() {
-  const [mode, setMode] = useState("video");
+  const [mode, setMode] = useState("url");
   const [url, setUrl] = useState("");
   const [file, setFile] = useState(null);
   const [language, setLanguage] = useState("Hindi");
@@ -17,32 +17,17 @@ export default function App() {
   async function submit(e) {
     e.preventDefault();
     setClips([]);
-    if (mode === "live") {
-      setStatus("Live-stream clipping is not available yet. Switch to Video mode and upload a recording.");
-      return;
-    }
-    if (mode === "url" && !url.trim()) {
-      setStatus("Paste a direct MP4, MOV, or WEBM file URL.");
-      return;
-    }
-    if (mode === "file" && !file) {
-      setStatus("Choose a video file or switch to URL mode.");
-      return;
-    }
-    if (mode === "file" && file.size > 500 * 1024 * 1024) {
-      setStatus("This file is larger than the current 500 MB upload limit.");
-      return;
-    }
-
+    if (mode === "url" && !url.trim()) return setStatus("Paste a direct public video-file URL.");
+    if (mode === "file" && !file) return setStatus("Choose a video file first.");
+    if (mode === "file" && file.size > 500 * 1024 * 1024) return setStatus("This file is larger than the 500 MB upload limit.");
     setBusy(true);
-    setStatus(mode === "url" ? "Fetching source video from URL…" : "Uploading video…");
+    setStatus(mode === "url" ? "Fetching video from link…" : "Uploading video…");
     try {
       let response;
       if (mode === "url") {
         response = await fetch(API + "/api/jobs/from-url", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ sourceUrl: url.trim(), language, clipDuration: duration }) });
       } else {
         const body = new FormData();
-        body.append("mode", "video");
         body.append("language", language);
         body.append("clipDuration", duration);
         body.append("video", file);
@@ -50,8 +35,6 @@ export default function App() {
       }
       const job = await response.json();
       if (!response.ok) throw Error(job.error || "Could not create job.");
-
-      setStatus("Video uploaded. Finding high-energy moments…");
       for (let attempt = 0; attempt < 180; attempt++) {
         await wait(2000);
         const poll = await fetch(API + "/api/jobs/" + job.jobId);
@@ -59,19 +42,15 @@ export default function App() {
         if (!poll.ok) throw Error(data.error || "Could not check job status.");
         if (data.status === "completed") {
           setClips(data.clips || []);
-          setStatus(data.subtitleStatus === "ready" ? "Finished! Hindi/English subtitles have been added to clips." : data.subtitleStatus === "not_configured" ? "Clips are ready. Add OPENAI_API_KEY in Render to enable automatic subtitles." : data.subtitleStatus === "audio_too_long" ? "Clips are ready, but the source audio is too long for one transcription request." : data.subtitleStatus === "failed" ? "Clips are ready, but transcription failed: " + (data.subtitleMessage || "check API key and try again.") : "Clips are ready. No speech was detected for subtitles.");
+          setStatus(data.subtitleStatus === "ready" ? "Done! Captions have been added." : data.subtitleStatus === "not_configured" ? "Clips ready. Add OPENAI_API_KEY in Render to enable captions." : "Clips are ready to download.");
           return;
         }
         if (data.status === "failed") throw Error(data.error || "Clip processing failed.");
-        setStatus(data.status === "processing"
-          ? "Analyzing audio and rendering vertical clips…"
-          : "Waiting for processing…");
+        setStatus(data.status === "downloading" ? "Downloading source video securely…" : "Finding highlights and rendering vertical clips…");
       }
-      setStatus("Processing is taking longer than expected. Please try again later.");
+      setStatus("Processing is taking longer than expected. Try again later.");
     } catch (err) {
-      setStatus(err.message === "Failed to fetch"
-        ? "Cannot reach the API server. Please check the deployment and try again."
-        : err.message);
+      setStatus(err.message === "Failed to fetch" ? "Cannot reach the API server. Check deployment and try again." : err.message);
     } finally {
       setBusy(false);
     }
@@ -79,81 +58,27 @@ export default function App() {
 
   return (
     <main className="shell">
-      <nav className="nav">
-        <a className="brand"><span className="brandIcon"><Scissors /></span>ViralClip<span>AI</span></a>
-        <span className="tag">● CREATOR STUDIO</span>
-      </nav>
-      <header className="hero">
-        <div className="eyebrow"><Sparkles size={14} /> AUTOMATED VIDEO CLIP GENERATION</div>
-        <h1>One long video.<br /><em>Many shareable moments.</em></h1>
-        <p>Find high-energy moments and turn them into vertical short clips.</p>
-      </header>
-
+      <nav className="nav"><a className="brand"><span className="brandIcon"><Scissors /></span>ViralClip<span>AI</span></a><span className="tag">● URL TO CLIP STUDIO</span></nav>
+      <header className="hero"><div className="eyebrow"><Sparkles size={14} /> AUTOMATED VIDEO CLIP GENERATION</div><h1>One link.<br /><em>Many shareable clips.</em></h1><p>Paste a direct video link and turn long videos into vertical Shorts.</p></header>
       <section className="panel">
         <div className="switch">
-          <button type="button" className={mode === "video" ? "active" : ""} onClick={() => { setMode("video"); setStatus(""); }}><Video /> Video mode</button>
-          <button type="button" className={mode === "live" ? "active" : ""} onClick={() => { setMode("live"); setStatus(""); setClips([]); }}><Radio /> Live mode</button>
+          <button type="button" className={mode === "url" ? "active" : ""} onClick={() => { setMode("url"); setStatus(""); }}><Link2 /> Paste video URL</button>
+          <button type="button" className={mode === "file" ? "active" : ""} onClick={() => { setMode("file"); setStatus(""); }}><Upload /> Upload file</button>
         </div>
-
-        {mode === "live" ? (
-          <div className="liveNotice">
-            <Radio />
-            <b>Live-stream clipping is coming soon</b>
-            <p>This version processes uploaded video recordings. Live capture is not connected yet. Switch to Video mode to create clips from a recording.</p>
-            <button type="button" className="submit" onClick={() => { setMode("video"); setStatus(""); }}>Switch to Video mode</button>
+        <form onSubmit={submit}>
+          {mode === "url" ? <label className="field"><span><Link2 /> Public direct video URL</span><input type="url" value={url} onChange={e => { setUrl(e.target.value); setStatus(""); }} placeholder="https://example.com/video.mp4" required /><small>Direct MP4, MOV, or WEBM file link only. YouTube watch/share links and private Drive pages are not supported.</small></label> : <label className="upload"><input type="file" accept="video/*" onChange={e => { setFile(e.target.files?.[0] || null); setStatus(""); }} /><Upload /><b>{file ? file.name : "Choose a video to upload"}</b><small>MP4, MOV, WEBM · Maximum 500 MB</small></label>}
+          <div className="options">
+            <label><span><Languages /> Subtitle language</span><select value={language} onChange={e => setLanguage(e.target.value)}>{["Hindi", "English", "Hinglish", "Auto detect"].map(x => <option key={x}>{x}</option>)}</select></label>
+            <label><span><Zap /> Clip duration</span><select value={duration} onChange={e => setDuration(e.target.value)}>{["15", "30", "45", "60"].map(x => <option value={x} key={x}>{x} seconds</option>)}</select></label>
           </div>
-        ) : (
-          <form onSubmit={submit}>
-            <label className="upload">
-              <input type="file" accept="video/*" onChange={e => { setFile(e.target.files?.[0] || null); setStatus(""); }} />
-              <Upload />
-              <b>{file ? file.name : "Choose a video to upload"}</b>
-              <small>MP4, MOV, WEBM · Maximum 500 MB</small>
-            </label>
-            <label className="field">
-              <span><Link2 /> Source URL · Coming soon</span>
-              <input value={url} onChange={e => setUrl(e.target.value)} placeholder="Direct video URL processing is not enabled" disabled />
-            </label>
-            <div className="options">
-              <label><span><Languages /> Subtitle language</span>
-                <select value={language} onChange={e => setLanguage(e.target.value)}>
-                  {["Hindi", "English", "Hinglish", "Auto detect"].map(x => <option key={x}>{x}</option>)}
-                </select>
-              </label>
-              <label><span><Zap /> Clip duration</span>
-                <select value={duration} onChange={e => setDuration(e.target.value)}>
-                  {["15", "30", "45", "60"].map(x => <option value={x} key={x}>{x} seconds</option>)}
-                </select>
-              </label>
-            </div>
-            <p className="subtitleHint">Auto captions need an OPENAI_API_KEY set in Render Environment. Keep the key private.</p>
-            <button className="submit" disabled={busy}>
-              {busy ? <><LoaderCircle className="spin" /> Processing…</> : <><Sparkles /> Find highlight moments</>}
-            </button>
-            {status && <p className="status" role="status">{status}</p>}
-          </form>
-        )}
-
-        {clips.length > 0 && (
-          <div className="results">
-            <h3><Sparkles size={17} /> Generated clips</h3>
-            {clips.map((clip, i) => (
-              <a className="clip" key={clip.name} href={API + clip.url} target="_blank" rel="noreferrer">
-                <span><Video /> Clip {i + 1} · {clip.durationSeconds}s {clip.subtitles ? "· Subtitles on" : "· No subtitles"}</span>
-                <small>Starts at {clip.startSeconds}s</small>
-                <b><Download size={16} /> Download MP4</b>
-              </a>
-            ))}
-          </div>
-        )}
+          <p className="subtitleHint">Automatic captions require OPENAI_API_KEY in Render Environment. Never share your key.</p>
+          <button className="submit" disabled={busy}>{busy ? <><LoaderCircle className="spin" /> Processing…</> : <><Sparkles /> Generate viral clips</>}</button>
+          {status && <p className="status" role="status">{status}</p>}
+        </form>
+        {clips.length > 0 && <div className="results"><h3><Sparkles size={17} /> Your generated clips</h3>{clips.map((clip, i) => <a className="clip" key={clip.name} href={API + clip.url} target="_blank" rel="noreferrer"><span><Video /> Clip {i + 1} · {clip.durationSeconds}s {clip.subtitles ? "· Subtitles on" : "· No subtitles"}</span><small>Starts at {clip.startSeconds}s</small><b><Download size={16} /> Download MP4</b></a>)}</div>}
       </section>
-
-      <section className="features">
-        <div><Scissors /><b>Audio energy scan</b><small>Finds louder moments</small></div>
-        <div><Video /><b>Vertical 9:16</b><small>Blurred-fill framing</small></div>
-        <div><Download /><b>MP4 export</b><small>Download your clips</small></div>
-      </section>
-      <p className="note">Highlight ranking currently uses audio energy, not semantic AI. Automatic subtitles require OPENAI_API_KEY in Render. Live capture is not available yet. Only process content you own or are authorized to use.</p>
+      <section className="features"><div><Scissors /><b>Highlight scan</b><small>Finds loud / energetic moments</small></div><div><Video /><b>Vertical 9:16</b><small>Shorts & Reels format</small></div><div><Download /><b>MP4 export</b><small>Download your clips</small></div></section>
+      <p className="note">Highlight ranking currently uses audio energy, not semantic AI. Only process videos you own or are authorized to use. No DRM, login, or paywall bypass.</p>
     </main>
   );
 }
